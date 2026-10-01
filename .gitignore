@@ -1,0 +1,20 @@
+# Environnement virtuel
+venv/
+
+# Base de donnees et cle secrete : JAMAIS sur Git
+app/database/school.db
+app/security/secret.key
+
+# Fichiers Python compiles
+__pycache__/
+*.pyc
+
+# Fichiers generes par PyInstaller
+build/
+dist/
+*.spec
+
+# Fichiers VS Code / OS
+.vscode/
+.DS_Store
+Thumbs.db
