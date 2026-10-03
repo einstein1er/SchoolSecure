@@ -48,9 +48,10 @@ def _item_montant(valeur: float) -> QTableWidgetItem:
 
 
 class ElevesListeWidget(QWidget):
-    def __init__(self, role: str = None):
+    def __init__(self, role: str = None, utilisateur_id: int = None):
         super().__init__()
         self.role = role
+        self.utilisateur_id = utilisateur_id
         self.peut_editer = role in ROLES_EDITION_AUTORISES
         self.classes = []  # liste des classes chargees (pour mapper nom <-> id)
         self._construire_interface()
@@ -146,7 +147,9 @@ class ElevesListeWidget(QWidget):
             self._rafraichir_complet()
 
     def _voir_fiche(self, eleve_id: int):
-        dialogue = EleveFicheDialog(role=self.role, eleve_id=eleve_id, parent=self)
+        dialogue = EleveFicheDialog(
+            role=self.role, eleve_id=eleve_id, utilisateur_id=self.utilisateur_id, parent=self
+        )
         dialogue.exec()
         # La fiche peut avoir entraine une modification (bouton "Modifier les
         # infos" dedans) ou un futur paiement : on rafraichit par precaution.

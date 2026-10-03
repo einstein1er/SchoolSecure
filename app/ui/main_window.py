@@ -21,7 +21,9 @@ from app.ui.eleves_liste_widget import ElevesListeWidget
 # provisoire "a venir". Pour brancher un nouvel ecran plus tard, il suffit
 # d'ajouter une ligne ici, rien d'autre a changer dans cette classe.
 ECRANS_REELS = {
-    "eleves_liste": lambda utilisateur: ElevesListeWidget(role=utilisateur["role"]),
+    "eleves_liste": lambda utilisateur: ElevesListeWidget(
+        role=utilisateur["role"], utilisateur_id=utilisateur["id"]
+    ),
 }
 
 NOMS_ROLES = {

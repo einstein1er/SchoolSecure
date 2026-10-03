@@ -30,10 +30,11 @@ ROLES_EDITION_AUTORISES = {"super_admin", "secretariat"}
 
 
 class EleveFicheDialog(QDialog):
-    def __init__(self, role: str, eleve_id: int, parent=None):
+    def __init__(self, role: str, eleve_id: int, utilisateur_id: int = None, parent=None):
         super().__init__(parent)
         self.role = role
         self.eleve_id = eleve_id
+        self.utilisateur_id = utilisateur_id
         self.peut_editer = role in ROLES_EDITION_AUTORISES
         self.fiche = fiche_complete_eleve(eleve_id)
 
@@ -66,19 +67,20 @@ class EleveFicheDialog(QDialog):
         grille_montants = QGridLayout()
         grille_montants.setHorizontalSpacing(32)
 
-        grille_montants.addWidget(self._bloc_montant("Total du", f["total_du"]), 0, 0)
-        grille_montants.addWidget(self._bloc_montant("Total paye", f["total_paye"]), 0, 1)
-        grille_montants.addWidget(self._bloc_montant("Solde restant", f["solde"]), 0, 2)
+        bloc1, self.label_total_du = self._bloc_montant_avec_ref("Total du", f["total_du"])
+        bloc2, self.label_total_paye = self._bloc_montant_avec_ref("Total paye", f["total_paye"])
+        bloc3, self.label_solde = self._bloc_montant_avec_ref("Solde restant", f["solde"])
+        grille_montants.addWidget(bloc1, 0, 0)
+        grille_montants.addWidget(bloc2, 0, 1)
+        grille_montants.addWidget(bloc3, 0, 2)
 
-        label_statut = QLabel(f["statut"])
-        label_statut.setStyleSheet(
-            f"font-size: 16px; font-weight: bold; color: {COULEURS_STATUT.get(f['statut'], QColor('#000')).name()};"
-        )
+        self.label_statut = QLabel(f["statut"])
+        self.label_statut.setStyleSheet(self._style_statut(f["statut"]))
         bloc_statut = QVBoxLayout()
         libelle = QLabel("Statut")
         libelle.setStyleSheet("color: #888; font-size: 12px;")
         bloc_statut.addWidget(libelle)
-        bloc_statut.addWidget(label_statut)
+        bloc_statut.addWidget(self.label_statut)
         conteneur_statut = self._enveloppe(bloc_statut)
         grille_montants.addWidget(conteneur_statut, 0, 3)
 
@@ -127,7 +129,10 @@ class EleveFicheDialog(QDialog):
 
         layout.addLayout(boutons)
 
-    def _bloc_montant(self, libelle_text: str, valeur: float) -> "QWidget":
+    def _bloc_montant_avec_ref(self, libelle_text: str, valeur: float):
+        """Retourne (widget_conteneur, label_valeur) -- on garde le label
+        pour pouvoir juste changer son texte apres un nouveau paiement,
+        sans reconstruire toute la fiche."""
         bloc = QVBoxLayout()
         libelle = QLabel(libelle_text)
         libelle.setStyleSheet("color: #888; font-size: 12px;")
@@ -135,7 +140,11 @@ class EleveFicheDialog(QDialog):
         valeur_label.setStyleSheet("font-size: 16px; font-weight: bold;")
         bloc.addWidget(libelle)
         bloc.addWidget(valeur_label)
-        return self._enveloppe(bloc)
+        return self._enveloppe(bloc), valeur_label
+
+    def _style_statut(self, statut: str) -> str:
+        couleur = COULEURS_STATUT.get(statut, QColor("#000")).name()
+        return f"font-size: 16px; font-weight: bold; color: {couleur};"
 
     def _enveloppe(self, inner_layout) -> "QWidget":
         from PySide6.QtWidgets import QWidget
@@ -177,10 +186,27 @@ class EleveFicheDialog(QDialog):
         QMessageBox.information(self, f"Recu {numero_recu}", message)
 
     def _enregistrer_paiement(self):
-        QMessageBox.information(
-            self, "A venir",
-            "L'enregistrement de paiement sera disponible a la prochaine etape."
+        from app.ui.paiement_form_dialog import PaiementFormDialog
+        dialogue = PaiementFormDialog(
+            eleve_id=self.eleve_id, enregistre_par=self.utilisateur_id, parent=self
         )
+        if dialogue.exec() == PaiementFormDialog.Accepted:
+            self._rafraichir_apres_paiement()
+
+    def _rafraichir_apres_paiement(self):
+        """Rafraichissement cible (pas de reconstruction complete de la
+        fenetre) : on recharge la fiche et on met a jour seulement les
+        widgets concernes -- montants, statut, tableau d'historique."""
+        self.fiche = fiche_complete_eleve(self.eleve_id)
+        f = self.fiche
+
+        self.label_total_du.setText(f"{f['total_du']:,.0f} FCFA".replace(",", " "))
+        self.label_total_paye.setText(f"{f['total_paye']:,.0f} FCFA".replace(",", " "))
+        self.label_solde.setText(f"{f['solde']:,.0f} FCFA".replace(",", " "))
+        self.label_statut.setText(f["statut"])
+        self.label_statut.setStyleSheet(self._style_statut(f["statut"]))
+
+        self._remplir_tableau_paiements()
 
     def _modifier_eleve(self):
         """Ouvre le formulaire de modification. Pour garder l'affichage de
