@@ -45,14 +45,19 @@ CREATE TABLE IF NOT EXISTS classes (
 -- 3. ELEVES
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS eleves (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    nom_chiffre         TEXT NOT NULL,       -- chiffre
-    prenom_chiffre      TEXT NOT NULL,       -- chiffre
-    classe_id           INTEGER NOT NULL,
-    annee_scolaire      TEXT NOT NULL,
-    total_du_chiffre    TEXT NOT NULL,       -- chiffre (montant sensible)
-    user_id             INTEGER,             -- NULL si l'eleve n'a pas encore de compte
-    date_creation       TEXT NOT NULL DEFAULT (datetime('now')),
+    id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    matricule               TEXT UNIQUE NOT NULL,   -- genere automatiquement, ex: ELV-2026-001
+    nom_chiffre              TEXT NOT NULL,       -- chiffre
+    prenom_chiffre           TEXT NOT NULL,       -- chiffre
+    classe_id                INTEGER NOT NULL,
+    annee_scolaire           TEXT NOT NULL,
+    total_du_chiffre         TEXT NOT NULL,       -- chiffre (montant sensible)
+    date_naissance           TEXT,                -- format AAAA-MM-JJ, optionnel, en clair (peu sensible)
+    sexe                     TEXT CHECK(sexe IN ('M', 'F') OR sexe IS NULL),
+    nom_parent_chiffre       TEXT,                -- chiffre, acces restreint (directeur) en modification
+    telephone_parent_chiffre TEXT,                -- chiffre, acces restreint (directeur) en modification
+    user_id                  INTEGER,             -- NULL si l'eleve n'a pas encore de compte
+    date_creation            TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (classe_id) REFERENCES classes(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

@@ -21,7 +21,7 @@ from app.ui.eleves_liste_widget import ElevesListeWidget
 # provisoire "a venir". Pour brancher un nouvel ecran plus tard, il suffit
 # d'ajouter une ligne ici, rien d'autre a changer dans cette classe.
 ECRANS_REELS = {
-    "eleves_liste": ElevesListeWidget,
+    "eleves_liste": lambda utilisateur: ElevesListeWidget(role=utilisateur["role"]),
 }
 
 NOMS_ROLES = {
@@ -134,7 +134,7 @@ class MainWindow(QWidget):
             self.boutons_menu.append((screen_id, bouton))
 
             if screen_id in ECRANS_REELS:
-                page = ECRANS_REELS[screen_id]()
+                page = ECRANS_REELS[screen_id](self.utilisateur)
             else:
                 page = _page_provisoire(libelle)
             index = self.zone_contenu.addWidget(page)

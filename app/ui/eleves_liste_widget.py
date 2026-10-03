@@ -13,6 +13,10 @@ from PySide6.QtGui import QColor
 
 from app.business.eleve_service import liste_eleves_avec_statut
 from app.repositories import classes_repository
+from app.ui.eleve_form_dialog import EleveFormDialog
+
+# Roles autorises a ajouter/modifier un eleve depuis cet ecran
+ROLES_EDITION_AUTORISES = {"super_admin", "secretariat"}
 
 COULEURS_STATUT = {
     "Solde": QColor("#16a34a"),              # vert
@@ -43,8 +47,10 @@ def _item_montant(valeur: float) -> QTableWidgetItem:
 
 
 class ElevesListeWidget(QWidget):
-    def __init__(self):
+    def __init__(self, role: str = None):
         super().__init__()
+        self.role = role
+        self.peut_editer = role in ROLES_EDITION_AUTORISES
         self.classes = []  # liste des classes chargees (pour mapper nom <-> id)
         self._construire_interface()
         self._charger_classes()
@@ -76,6 +82,14 @@ class ElevesListeWidget(QWidget):
         bouton_actualiser.clicked.connect(self._rafraichir_complet)
         barre_outils.addWidget(bouton_actualiser)
 
+        if self.peut_editer:
+            bouton_ajouter = QPushButton("+ Ajouter un eleve")
+            bouton_ajouter.setStyleSheet(
+                "background-color: #2563eb; color: white; font-weight: bold; padding: 6px 12px;"
+            )
+            bouton_ajouter.clicked.connect(self._ouvrir_formulaire_ajout)
+            barre_outils.addWidget(bouton_ajouter)
+
         layout.addLayout(barre_outils)
 
         # --- Tableau ---
@@ -88,6 +102,8 @@ class ElevesListeWidget(QWidget):
         self.tableau.setSortingEnabled(True)  # clic sur un en-tete = tri sur cette colonne
         self.tableau.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.tableau.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        if self.peut_editer:
+            self.tableau.cellDoubleClicked.connect(self._ouvrir_formulaire_modification)
         layout.addWidget(self.tableau)
 
         self.label_compteur = QLabel("")
@@ -118,6 +134,20 @@ class ElevesListeWidget(QWidget):
         for c in self.classes:
             self.filtre_classe.addItem(c["nom"], userData=c["id"])
         self.filtre_classe.blockSignals(False)
+
+    def _ouvrir_formulaire_ajout(self):
+        dialogue = EleveFormDialog(role=self.role, eleve_id=None, parent=self)
+        if dialogue.exec() == EleveFormDialog.Accepted:
+            self._rafraichir_complet()
+
+    def _ouvrir_formulaire_modification(self, ligne: int, colonne: int):
+        item = self.tableau.item(ligne, 0)
+        if item is None:
+            return
+        eleve_id = item.data(Qt.UserRole)
+        dialogue = EleveFormDialog(role=self.role, eleve_id=eleve_id, parent=self)
+        if dialogue.exec() == EleveFormDialog.Accepted:
+            self._rafraichir_complet()
 
     def _rafraichir_complet(self):
         self._charger_classes()
