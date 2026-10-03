@@ -14,6 +14,7 @@ from PySide6.QtGui import QColor
 from app.business.eleve_service import liste_eleves_avec_statut
 from app.repositories import classes_repository
 from app.ui.eleve_form_dialog import EleveFormDialog
+from app.ui.eleve_fiche_dialog import EleveFicheDialog
 
 # Roles autorises a ajouter/modifier un eleve depuis cet ecran
 ROLES_EDITION_AUTORISES = {"super_admin", "secretariat"}
@@ -24,7 +25,7 @@ COULEURS_STATUT = {
     "Non paye": QColor("#dc2626"),            # rouge
 }
 
-COLONNES = ["Nom", "Prenom", "Classe", "Total du", "Total paye", "Solde", "Statut"]
+COLONNES = ["Nom", "Prenom", "Classe", "Total du", "Total paye", "Solde", "Statut", "Actions"]
 
 
 class _ItemMontant(QTableWidgetItem):
@@ -102,8 +103,7 @@ class ElevesListeWidget(QWidget):
         self.tableau.setSortingEnabled(True)  # clic sur un en-tete = tri sur cette colonne
         self.tableau.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
         self.tableau.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
-        if self.peut_editer:
-            self.tableau.cellDoubleClicked.connect(self._ouvrir_formulaire_modification)
+        self.tableau.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
         layout.addWidget(self.tableau)
 
         self.label_compteur = QLabel("")
@@ -140,14 +140,17 @@ class ElevesListeWidget(QWidget):
         if dialogue.exec() == EleveFormDialog.Accepted:
             self._rafraichir_complet()
 
-    def _ouvrir_formulaire_modification(self, ligne: int, colonne: int):
-        item = self.tableau.item(ligne, 0)
-        if item is None:
-            return
-        eleve_id = item.data(Qt.UserRole)
+    def _ouvrir_formulaire_modification(self, eleve_id: int):
         dialogue = EleveFormDialog(role=self.role, eleve_id=eleve_id, parent=self)
         if dialogue.exec() == EleveFormDialog.Accepted:
             self._rafraichir_complet()
+
+    def _voir_fiche(self, eleve_id: int):
+        dialogue = EleveFicheDialog(role=self.role, eleve_id=eleve_id, parent=self)
+        dialogue.exec()
+        # La fiche peut avoir entraine une modification (bouton "Modifier les
+        # infos" dedans) ou un futur paiement : on rafraichit par precaution.
+        self._rafraichir_complet()
 
     def _rafraichir_complet(self):
         self._charger_classes()
@@ -180,9 +183,27 @@ class ElevesListeWidget(QWidget):
             item_statut.setTextAlignment(Qt.AlignCenter)
             self.tableau.setItem(ligne, 6, item_statut)
 
-            # On garde l'id eleve accessible sur la ligne pour les futurs ecrans
-            # (fiche detaillee / paiement) qui viendront se brancher dessus.
             self.tableau.item(ligne, 0).setData(Qt.UserRole, eleve["id"])
+
+            # Colonne Actions : boutons "Voir" et "Modifier" cote a cote.
+            # On pose aussi un item texte vide dessous pour que le tri
+            # (active sur tout le tableau) ne plante pas sur cette colonne.
+            self.tableau.setItem(ligne, 7, QTableWidgetItem(""))
+            conteneur_actions = QWidget()
+            layout_actions = QHBoxLayout(conteneur_actions)
+            layout_actions.setContentsMargins(4, 2, 4, 2)
+            layout_actions.setSpacing(6)
+
+            bouton_voir = QPushButton("Voir")
+            bouton_voir.clicked.connect(lambda checked, eid=eleve["id"]: self._voir_fiche(eid))
+            layout_actions.addWidget(bouton_voir)
+
+            if self.peut_editer:
+                bouton_modifier = QPushButton("Modifier")
+                bouton_modifier.clicked.connect(lambda checked, eid=eleve["id"]: self._ouvrir_formulaire_modification(eid))
+                layout_actions.addWidget(bouton_modifier)
+
+            self.tableau.setCellWidget(ligne, 7, conteneur_actions)
 
         self.tableau.setSortingEnabled(True)
         self.label_compteur.setText(f"{len(eleves)} eleve(s) affiche(s)")
