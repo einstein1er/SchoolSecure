@@ -95,6 +95,18 @@ def supprimer_eleve(eleve_id: int) -> None:
         connexion.close()
 
 
+def obtenir_eleve_par_user_id(user_id: int) -> dict | None:
+    """Retrouve la fiche eleve liee a un compte de connexion donne.
+    Utilise pour le dashboard eleve : l'eleve connecte voit SA fiche."""
+    connexion = get_connection()
+    try:
+        curseur = connexion.execute("SELECT * FROM eleves WHERE user_id = ?", (user_id,))
+        ligne = curseur.fetchone()
+        return _dechiffrer_eleve(ligne) if ligne else None
+    finally:
+        connexion.close()
+
+
 def obtenir_eleve(eleve_id: int) -> dict | None:
     connexion = get_connection()
     try:
