@@ -105,6 +105,18 @@ CREATE TABLE IF NOT EXISTS professeurs (
 );
 
 -- ------------------------------------------------------------
+-- 6bis. AFFECTATION PROFESSEUR <-> CLASSE (un prof peut avoir plusieurs classes)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS professeurs_classes (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    professeur_id   INTEGER NOT NULL,
+    classe_id       INTEGER NOT NULL,
+    FOREIGN KEY (professeur_id) REFERENCES professeurs(id),
+    FOREIGN KEY (classe_id) REFERENCES classes(id),
+    UNIQUE(professeur_id, classe_id)
+);
+
+-- ------------------------------------------------------------
 -- 7. COURS (depots PDF par un professeur)
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS cours (

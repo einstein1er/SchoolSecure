@@ -18,6 +18,7 @@ from app.ui.eleves_liste_widget import ElevesListeWidget
 from app.ui.tableau_bord_widget import TableauBordWidget
 from app.ui.dashboard_eleve_widget import DashboardEleveWidget
 from app.ui.dashboard_parent_widget import DashboardParentWidget
+from app.ui.dashboard_prof_widget import DashboardProfWidget
 
 # Roles qui voient le vrai tableau de bord (stats financieres de l'etablissement).
 # Les autres roles (professeur, eleve, parent) auront leur propre dashboard
@@ -44,6 +45,9 @@ ECRANS_REELS = {
     ),
     "suivi_enfant": lambda utilisateur: (
         DashboardParentWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "parent" else None
+    ),
+    "mes_eleves": lambda utilisateur: (
+        DashboardProfWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "professeur" else None
     ),
 }
 

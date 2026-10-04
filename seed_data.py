@@ -15,7 +15,7 @@ d'abord si les classes/utilisateurs existent deja.
 import random
 from app.repositories import (
     classes_repository, users_repository, eleves_repository,
-    paiements_repository, parents_eleves_repository,
+    paiements_repository, parents_eleves_repository, professeurs_repository,
 )
 
 ANNEE_SCOLAIRE = "2025-2026"
@@ -113,6 +113,23 @@ def main():
         parents_eleves_repository.lier_parent_eleve(parent_id, eleve_ids[0])
         parents_eleves_repository.lier_parent_eleve(parent_id, eleve_ids[1])
         print(f"parent_test (id={parent_id}) / mot de passe : test1234  -- lie aux eleves id {eleve_ids[0]} et {eleve_ids[1]}")
+
+    print("\n--- Creation de 3 comptes professeur de test, un par classe ---")
+    PROFS_DATA = [
+        ("prof_test1", "Essodina AWUKU", "Mathematiques"),
+        ("prof_test2", "Pyabelo KODJO", "Francais"),
+        ("prof_test3", "Nadia BALOGOU", "Sciences"),
+    ]
+    for (username_prof, nom_complet_prof, specialite), classe_id in zip(PROFS_DATA, classe_ids):
+        prof_user_id = recuperer_ou_creer_utilisateur_test(username_prof, "professeur", nom_complet_prof)
+        professeur_existant = professeurs_repository.obtenir_professeur_par_user_id(prof_user_id)
+        if professeur_existant is None:
+            professeur_id = professeurs_repository.creer_professeur(prof_user_id, specialite=specialite)
+        else:
+            professeur_id = professeur_existant["id"]
+        professeurs_repository.assigner_classe(professeur_id, classe_id)
+        print(f"{username_prof} (id={prof_user_id}) / mot de passe : test1234  -- {nom_complet_prof}, "
+              f"{specialite}, rattache a la classe id {classe_id}")
 
     print("\nJeu de donnees genere avec succes.")
 
