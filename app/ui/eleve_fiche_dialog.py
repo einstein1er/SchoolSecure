@@ -5,7 +5,7 @@ des paiements, avec possibilite de revoir un recu deja emis.
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QPushButton,
-    QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox
+    QTableWidget, QTableWidgetItem, QHeaderView, QMessageBox, QWidget, QFileDialog
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
@@ -39,7 +39,7 @@ class EleveFicheDialog(QDialog):
         self.fiche = fiche_complete_eleve(eleve_id)
 
         self.setWindowTitle("Fiche eleve")
-        self.setMinimumSize(700, 550)
+        self.setMinimumSize(820, 560)
         self._construire_interface()
 
     def _construire_interface(self):
@@ -98,6 +98,7 @@ class EleveFicheDialog(QDialog):
         self.tableau_paiements.setEditTriggers(QTableWidget.NoEditTriggers)
         self.tableau_paiements.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableau_paiements.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        self.tableau_paiements.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
         self._remplir_tableau_paiements()
         layout.addWidget(self.tableau_paiements)
 
@@ -162,9 +163,20 @@ class EleveFicheDialog(QDialog):
             self.tableau_paiements.setItem(ligne, 3, QTableWidgetItem(p["numero_recu"]))
             self.tableau_paiements.setItem(ligne, 4, QTableWidgetItem(f"{p['solde_apres']:,.0f}".replace(",", " ")))
 
-            bouton_revoir = QPushButton("Revoir le recu")
+            conteneur = QWidget()
+            layout_boutons = QHBoxLayout(conteneur)
+            layout_boutons.setContentsMargins(2, 2, 2, 2)
+            layout_boutons.setSpacing(4)
+
+            bouton_revoir = QPushButton("Revoir")
             bouton_revoir.clicked.connect(lambda checked, num=p["numero_recu"]: self._revoir_recu(num))
-            self.tableau_paiements.setCellWidget(ligne, 5, bouton_revoir)
+            layout_boutons.addWidget(bouton_revoir)
+
+            bouton_pdf = QPushButton("Export PDF")
+            bouton_pdf.clicked.connect(lambda checked, num=p["numero_recu"]: self._exporter_pdf(num))
+            layout_boutons.addWidget(bouton_pdf)
+
+            self.tableau_paiements.setCellWidget(ligne, 5, conteneur)
 
     def _revoir_recu(self, numero_recu: str):
         """Version provisoire : affiche les details du recu dans une boite
@@ -185,6 +197,23 @@ class EleveFicheDialog(QDialog):
         ).replace(",", " ")
         QMessageBox.information(self, f"Recu {numero_recu}", message)
 
+    def _exporter_pdf(self, numero_recu: str):
+        """Ouvre un selecteur pour choisir ou enregistrer le PDF du recu."""
+        from app.business.recu_pdf import generer_pdf_recu, RecuIntrouvableError
+        chemin_defaut = f"{numero_recu}.pdf"
+        chemin, _ = QFileDialog.getSaveFileName(
+            self, "Enregistrer le recu", chemin_defaut, "Fichiers PDF (*.pdf)"
+        )
+        if not chemin:
+            return  # utilisateur a annule
+        try:
+            generer_pdf_recu(numero_recu, chemin)
+            QMessageBox.information(self, "Recu exporte", f"Le recu a ete enregistre :\n{chemin}")
+        except RecuIntrouvableError as e:
+            QMessageBox.warning(self, "Introuvable", str(e))
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur technique", f"Impossible de generer le PDF : {e}")
+
     def _enregistrer_paiement(self):
         from app.ui.paiement_form_dialog import PaiementFormDialog
         dialogue = PaiementFormDialog(
@@ -192,6 +221,17 @@ class EleveFicheDialog(QDialog):
         )
         if dialogue.exec() == PaiementFormDialog.Accepted:
             self._rafraichir_apres_paiement()
+            self._proposer_export_pdf(dialogue.paiement_enregistre["numero_recu"])
+
+    def _proposer_export_pdf(self, numero_recu: str):
+        reponse = QMessageBox.question(
+            self, "Paiement enregistre",
+            f"Le paiement a ete enregistre (recu {numero_recu}).\n\n"
+            f"Voulez-vous exporter le recu en PDF maintenant ?",
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes
+        )
+        if reponse == QMessageBox.Yes:
+            self._exporter_pdf(numero_recu)
 
     def _rafraichir_apres_paiement(self):
         """Rafraichissement cible (pas de reconstruction complete de la
