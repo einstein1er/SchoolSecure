@@ -15,14 +15,24 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Signal, Qt
 
 from app.ui.eleves_liste_widget import ElevesListeWidget
+from app.ui.tableau_bord_widget import TableauBordWidget
 
-# Ecrans reellement codes : screen_id -> fonction qui construit le widget.
-# Un screen_id absent de ce dictionnaire affiche automatiquement la page
-# provisoire "a venir". Pour brancher un nouvel ecran plus tard, il suffit
-# d'ajouter une ligne ici, rien d'autre a changer dans cette classe.
+# Roles qui voient le vrai tableau de bord (stats financieres de l'etablissement).
+# Les autres roles (professeur, eleve, parent) auront leur propre dashboard
+# plus tard -- en attendant, ils gardent la page "a venir" sur cette entree.
+ROLES_TABLEAU_BORD_ADMIN = {"super_admin", "secretariat", "comptabilite", "rh"}
+
+# Ecrans reellement codes : screen_id -> fonction qui construit le widget,
+# ou qui retourne None pour laisser la page provisoire "a venir" s'afficher
+# (utile quand le meme screen_id doit avoir un contenu different, ou pas
+# encore code, selon le role connecte).
 ECRANS_REELS = {
     "eleves_liste": lambda utilisateur: ElevesListeWidget(
         role=utilisateur["role"], utilisateur_id=utilisateur["id"]
+    ),
+    "tableau_de_bord": lambda utilisateur: (
+        TableauBordWidget(role=utilisateur["role"])
+        if utilisateur["role"] in ROLES_TABLEAU_BORD_ADMIN else None
     ),
 }
 
@@ -135,9 +145,10 @@ class MainWindow(QWidget):
             layout_barre.addWidget(bouton)
             self.boutons_menu.append((screen_id, bouton))
 
+            page = None
             if screen_id in ECRANS_REELS:
                 page = ECRANS_REELS[screen_id](self.utilisateur)
-            else:
+            if page is None:
                 page = _page_provisoire(libelle)
             index = self.zone_contenu.addWidget(page)
             self.pages_par_screen_id[screen_id] = index
