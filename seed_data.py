@@ -13,7 +13,10 @@ d'abord si les classes/utilisateurs existent deja.
 """
 
 import random
-from app.repositories import classes_repository, users_repository, eleves_repository, paiements_repository
+from app.repositories import (
+    classes_repository, users_repository, eleves_repository,
+    paiements_repository, parents_eleves_repository,
+)
 
 ANNEE_SCOLAIRE = "2025-2026"
 
@@ -46,6 +49,7 @@ def recuperer_ou_creer_utilisateur_test(username, role, nom_complet):
 
 
 def generer_eleves_et_paiements(classe_ids, enregistre_par):
+    eleve_ids_crees = []
     for i, (nom, prenom) in enumerate(ELEVES_DATA):
         classe_id = classe_ids[i % len(classe_ids)]
         total_du = random.choice([100000, 125000, 150000])
@@ -82,6 +86,10 @@ def generer_eleves_et_paiements(classe_ids, enregistre_par):
         print(f"Eleve cree : {prenom} {nom} (classe_id={classe_id}, total_du={total_du}, "
               f"groupe={['solde','partiel','non_paye'][groupe]}) | login: {username_eleve} / eleve1234")
 
+        eleve_ids_crees.append(eleve_id)
+
+    return eleve_ids_crees
+
 
 def main():
     print("--- Creation des classes ---")
@@ -97,7 +105,14 @@ def main():
     print(f"directeur_test (id={directeur_id}) / mot de passe : test1234")
 
     print("\n--- Creation des eleves et paiements ---")
-    generer_eleves_et_paiements(classe_ids, enregistre_par=secretaire_id)
+    eleve_ids = generer_eleves_et_paiements(classe_ids, enregistre_par=secretaire_id)
+
+    print("\n--- Creation d'un compte parent de test, lie a 2 enfants ---")
+    parent_id = recuperer_ou_creer_utilisateur_test("parent_test", "parent", "Kossi ATTIOGBE")
+    if len(eleve_ids) >= 2:
+        parents_eleves_repository.lier_parent_eleve(parent_id, eleve_ids[0])
+        parents_eleves_repository.lier_parent_eleve(parent_id, eleve_ids[1])
+        print(f"parent_test (id={parent_id}) / mot de passe : test1234  -- lie aux eleves id {eleve_ids[0]} et {eleve_ids[1]}")
 
     print("\nJeu de donnees genere avec succes.")
 

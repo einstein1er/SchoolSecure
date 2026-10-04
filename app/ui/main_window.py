@@ -17,6 +17,7 @@ from PySide6.QtCore import Signal, Qt
 from app.ui.eleves_liste_widget import ElevesListeWidget
 from app.ui.tableau_bord_widget import TableauBordWidget
 from app.ui.dashboard_eleve_widget import DashboardEleveWidget
+from app.ui.dashboard_parent_widget import DashboardParentWidget
 
 # Roles qui voient le vrai tableau de bord (stats financieres de l'etablissement).
 # Les autres roles (professeur, eleve, parent) auront leur propre dashboard
@@ -35,10 +36,14 @@ ECRANS_REELS = {
         TableauBordWidget(role=utilisateur["role"])
         if utilisateur["role"] in ROLES_TABLEAU_BORD_ADMIN
         else DashboardEleveWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "eleve"
+        else DashboardParentWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "parent"
         else None
     ),
     "mes_paiements": lambda utilisateur: (
         DashboardEleveWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "eleve" else None
+    ),
+    "suivi_enfant": lambda utilisateur: (
+        DashboardParentWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "parent" else None
     ),
 }
 
