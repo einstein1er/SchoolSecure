@@ -5,6 +5,9 @@ venv/
 app/database/school.db
 app/security/secret.key
 
+# Fichiers de cours uploades par les profs (contenu genere par l'utilisateur)
+fichiers_cours/
+
 # Fichiers Python compiles
 __pycache__/
 *.pyc

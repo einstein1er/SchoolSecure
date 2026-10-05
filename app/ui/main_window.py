@@ -21,6 +21,7 @@ from app.ui.dashboard_parent_widget import DashboardParentWidget
 from app.ui.dashboard_prof_widget import DashboardProfWidget
 from app.ui.employes_rh_widget import EmployesRHWidget
 from app.ui.gestion_permissions_widget import GestionPermissionsWidget
+from app.ui.cours_prof_widget import CoursProfWidget
 
 from app.repositories import permissions_repository
 
@@ -56,6 +57,12 @@ ECRANS_REELS = {
     ),
     "mes_eleves": lambda utilisateur: (
         DashboardProfWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "professeur" else None
+    ),
+    "mes_cours": lambda utilisateur: (
+        CoursProfWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "professeur" else None
+    ),
+    "emploi_du_temps": lambda utilisateur: (
+        CoursProfWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "professeur" else None
     ),
     "rh": lambda utilisateur: (
         EmployesRHWidget(role=utilisateur["role"])
