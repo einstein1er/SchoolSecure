@@ -20,13 +20,15 @@ from app.ui.dashboard_eleve_widget import DashboardEleveWidget
 from app.ui.dashboard_parent_widget import DashboardParentWidget
 from app.ui.dashboard_prof_widget import DashboardProfWidget
 from app.ui.employes_rh_widget import EmployesRHWidget
+from app.ui.gestion_permissions_widget import GestionPermissionsWidget
 
-ROLES_RH_AUTORISES = {"super_admin", "rh"}
+from app.repositories import permissions_repository
 
-# Roles qui voient le vrai tableau de bord (stats financieres de l'etablissement).
-# Les autres roles (professeur, eleve, parent) auront leur propre dashboard
-# plus tard -- en attendant, ils gardent la page "a venir" sur cette entree.
-ROLES_TABLEAU_BORD_ADMIN = {"super_admin", "secretariat", "comptabilite", "rh"}
+# Roles pour qui "tableau_de_bord" peut designer le dashboard admin
+# (stats financieres). Les autres (eleve, parent) ont leur propre
+# dashboard gere a part ci-dessous. L'acces reel est verifie via la
+# permission 'tableau_bord_admin', configurable par le directeur.
+ROLES_SUSCEPTIBLES_TABLEAU_BORD_ADMIN = {"super_admin", "secretariat", "comptabilite", "rh"}
 
 # Ecrans reellement codes : screen_id -> fonction qui construit le widget,
 # ou qui retourne None pour laisser la page provisoire "a venir" s'afficher
@@ -38,7 +40,10 @@ ECRANS_REELS = {
     ),
     "tableau_de_bord": lambda utilisateur: (
         TableauBordWidget(role=utilisateur["role"])
-        if utilisateur["role"] in ROLES_TABLEAU_BORD_ADMIN
+        if utilisateur["role"] == "super_admin" or (
+            utilisateur["role"] in ROLES_SUSCEPTIBLES_TABLEAU_BORD_ADMIN
+            and permissions_repository.autorise(utilisateur["role"], "tableau_bord_admin")
+        )
         else DashboardEleveWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "eleve"
         else DashboardParentWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "parent"
         else None
@@ -53,7 +58,12 @@ ECRANS_REELS = {
         DashboardProfWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "professeur" else None
     ),
     "rh": lambda utilisateur: (
-        EmployesRHWidget(role=utilisateur["role"]) if utilisateur["role"] in ROLES_RH_AUTORISES else None
+        EmployesRHWidget(role=utilisateur["role"])
+        if utilisateur["role"] == "super_admin" or permissions_repository.autorise(utilisateur["role"], "rh_acces")
+        else None
+    ),
+    "comptes": lambda utilisateur: (
+        GestionPermissionsWidget() if utilisateur["role"] == "super_admin" else None
     ),
 }
 

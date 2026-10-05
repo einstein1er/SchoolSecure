@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 
 from app.business.eleve_service import fiche_complete_eleve
-from app.repositories import classes_repository
+from app.repositories import classes_repository, permissions_repository
 
 COULEURS_STATUT = {
     "Solde": QColor("#16a34a"),
@@ -26,8 +26,6 @@ LIBELLES_MODE_PAIEMENT = {
     "mobile_money": "Mobile Money",
 }
 
-ROLES_EDITION_AUTORISES = {"super_admin", "secretariat"}
-
 
 class EleveFicheDialog(QDialog):
     def __init__(self, role: str, eleve_id: int, utilisateur_id: int = None, parent=None):
@@ -35,7 +33,7 @@ class EleveFicheDialog(QDialog):
         self.role = role
         self.eleve_id = eleve_id
         self.utilisateur_id = utilisateur_id
-        self.peut_editer = role in ROLES_EDITION_AUTORISES
+        self.peut_editer = role == "super_admin" or permissions_repository.autorise(role, "eleves_modifier")
         self.fiche = fiche_complete_eleve(eleve_id)
 
         self.setWindowTitle("Fiche eleve")

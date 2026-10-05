@@ -15,9 +15,7 @@ from app.business.eleve_service import liste_eleves_avec_statut
 from app.repositories import classes_repository
 from app.ui.eleve_form_dialog import EleveFormDialog
 from app.ui.eleve_fiche_dialog import EleveFicheDialog
-
-# Roles autorises a ajouter/modifier un eleve depuis cet ecran
-ROLES_EDITION_AUTORISES = {"super_admin", "secretariat"}
+from app.repositories import permissions_repository
 
 COULEURS_STATUT = {
     "Solde": QColor("#16a34a"),              # vert
@@ -52,7 +50,7 @@ class ElevesListeWidget(QWidget):
         super().__init__()
         self.role = role
         self.utilisateur_id = utilisateur_id
-        self.peut_editer = role in ROLES_EDITION_AUTORISES
+        self.peut_editer = role == "super_admin" or permissions_repository.autorise(role, "eleves_modifier")
         self.classes = []  # liste des classes chargees (pour mapper nom <-> id)
         self._construire_interface()
         self._charger_classes()

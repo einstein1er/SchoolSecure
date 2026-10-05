@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from app.repositories import classes_repository, eleves_repository
+from app.repositories import classes_repository, eleves_repository, permissions_repository
 from app.business.soldes import MontantInvalideError
 
 
@@ -31,8 +31,11 @@ class EleveFormDialog(QDialog):
         self.mode_edition = eleve_id is not None
         self.eleve_existant = eleves_repository.obtenir_eleve(eleve_id) if self.mode_edition else None
 
+        # Creation : toujours autorise (saisie initiale, pas de risque d'ecraser
+        # une donnee existante qu'on ne voit pas). Modification : depend de la
+        # permission configurable par le directeur (super_admin toujours vrai).
         self.afficher_champs_parent = (
-            self.role == "super_admin" or not self.mode_edition
+            not self.mode_edition or permissions_repository.autorise(self.role, "voir_infos_parent")
         )
 
         self.setWindowTitle("Modifier un eleve" if self.mode_edition else "Ajouter un eleve")

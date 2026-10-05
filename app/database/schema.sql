@@ -190,6 +190,44 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 
 -- ------------------------------------------------------------
+-- 12. PERMISSIONS CONFIGURABLES PAR ROLE (systeme generique)
+-- ------------------------------------------------------------
+-- Table generique cle/role/autorise : n'importe quelle nouvelle
+-- permission peut s'ajouter plus tard en inserant simplement de
+-- nouvelles lignes, sans modifier la structure de la table.
+-- super_admin n'a jamais de ligne ici : il a TOUJOURS acces a tout,
+-- non configurable, pour garantir un acces de secours permanent.
+CREATE TABLE IF NOT EXISTS permissions (
+    role        TEXT NOT NULL,
+    cle         TEXT NOT NULL,
+    autorise    INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (role, cle)
+);
+
+-- Valeurs par defaut = exactement le comportement qui existait avant
+-- la mise en place de ce systeme (aucune regression a l'activation).
+INSERT OR IGNORE INTO permissions (role, cle, autorise) VALUES
+    ('secretariat',  'voir_infos_parent',   0),
+    ('comptabilite', 'voir_infos_parent',   0),
+    ('rh',           'voir_infos_parent',   0),
+    ('professeur',   'voir_infos_parent',   0),
+
+    ('secretariat',  'eleves_modifier',     1),
+    ('comptabilite', 'eleves_modifier',     0),
+    ('rh',           'eleves_modifier',     0),
+    ('professeur',   'eleves_modifier',     0),
+
+    ('secretariat',  'tableau_bord_admin',  1),
+    ('comptabilite', 'tableau_bord_admin',  1),
+    ('rh',           'tableau_bord_admin',  1),
+    ('professeur',   'tableau_bord_admin',  0),
+
+    ('secretariat',  'rh_acces',            0),
+    ('comptabilite', 'rh_acces',            0),
+    ('rh',           'rh_acces',            1),
+    ('professeur',   'rh_acces',            0);
+
+-- ------------------------------------------------------------
 -- INDEX utiles pour les recherches/filtres frequents
 -- ------------------------------------------------------------
 CREATE INDEX IF NOT EXISTS idx_eleves_classe ON eleves(classe_id);
