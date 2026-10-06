@@ -21,12 +21,13 @@ from app.business.soldes import MontantInvalideError
 
 
 class EleveFormDialog(QDialog):
-    def __init__(self, role: str, eleve_id: int = None, parent=None):
+    def __init__(self, role: str, eleve_id: int = None, utilisateur_id: int = None, parent=None):
         """role : role de l'utilisateur connecte (controle l'acces aux
         champs parent). eleve_id : None pour un ajout, un id pour une
         modification."""
         super().__init__(parent)
         self.role = role
+        self.utilisateur_id = utilisateur_id
         self.eleve_id = eleve_id
         self.mode_edition = eleve_id is not None
         self.eleve_existant = eleves_repository.obtenir_eleve(eleve_id) if self.mode_edition else None
@@ -211,6 +212,7 @@ class EleveFormDialog(QDialog):
                     sexe=valeurs["sexe"],
                     nom_parent=valeurs["nom_parent"], telephone_parent=valeurs["telephone_parent"],
                     modifier_champs_parent=self.afficher_champs_parent,
+                    modifie_par=self.utilisateur_id,
                 )
             else:
                 eleves_repository.ajouter_eleve(
@@ -218,6 +220,7 @@ class EleveFormDialog(QDialog):
                     valeurs["annee_scolaire"], valeurs["total_du"],
                     date_naissance=valeurs["date_naissance"], sexe=valeurs["sexe"],
                     nom_parent=valeurs["nom_parent"], telephone_parent=valeurs["telephone_parent"],
+                    modifie_par=self.utilisateur_id,
                 )
         except MontantInvalideError as e:
             self.label_erreur.setText(str(e))

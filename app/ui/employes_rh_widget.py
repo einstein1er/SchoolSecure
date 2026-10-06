@@ -22,9 +22,10 @@ NOMS_ROLES = {
 
 
 class EmployesRHWidget(QWidget):
-    def __init__(self, role: str = None):
+    def __init__(self, role: str = None, utilisateur_id: int = None):
         super().__init__()
         self.role = role
+        self.utilisateur_id = utilisateur_id
         self._construire_interface()
         self._rafraichir()
 
@@ -68,7 +69,7 @@ class EmployesRHWidget(QWidget):
         layout.addWidget(self.label_compteur)
 
     def _ouvrir_formulaire_ajout(self):
-        dialogue = EmployeFormDialog(parent=self)
+        dialogue = EmployeFormDialog(utilisateur_id=self.utilisateur_id, parent=self)
         if dialogue.exec() == EmployeFormDialog.Accepted:
             self._rafraichir()
 

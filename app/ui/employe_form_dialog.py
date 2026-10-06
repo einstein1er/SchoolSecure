@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QMessageBox
 )
 
-from app.repositories import users_repository, employes_rh_repository, professeurs_repository
+from app.repositories import users_repository, employes_rh_repository, professeurs_repository, audit_log_repository
 
 ROLES_DISPONIBLES = [
     ("Secretariat", "secretariat"),
@@ -23,8 +23,9 @@ ROLES_DISPONIBLES = [
 
 
 class EmployeFormDialog(QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, utilisateur_id: int = None, parent=None):
         super().__init__(parent)
+        self.utilisateur_id = utilisateur_id
         self.setWindowTitle("Ajouter un employe")
         self.setMinimumWidth(420)
         self._construire_interface()
@@ -125,5 +126,11 @@ class EmployeFormDialog(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Erreur technique", f"Compte cree, mais erreur sur la fiche RH : {e}")
             return
+
+        if self.utilisateur_id is not None:
+            audit_log_repository.enregistrer(
+                self.utilisateur_id, "CREATION", "users", user_id,
+                f"Creation du compte '{username}' ({role}) pour {nom_complet}"
+            )
 
         self.accept()

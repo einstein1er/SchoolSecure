@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QTextEdit, QFileDialog, QMessageBox
 )
 
-from app.repositories import cours_repository, professeurs_repository
+from app.repositories import cours_repository, professeurs_repository, audit_log_repository
 from app.business.stockage_fichiers import copier_fichier_cours
 
 
@@ -110,9 +110,13 @@ class CoursFormDialog(QDialog):
                 return
 
         try:
-            cours_repository.ajouter_cours(self.professeur["id"], classe_id, titre, description, fichier_pdf)
+            cours_id = cours_repository.ajouter_cours(self.professeur["id"], classe_id, titre, description, fichier_pdf)
         except Exception as e:
             QMessageBox.critical(self, "Erreur technique", f"Une erreur est survenue : {e}")
             return
+
+        audit_log_repository.enregistrer(
+            self.user_id, "CREATION", "cours", cours_id, f"Depot du cours '{titre}'"
+        )
 
         self.accept()

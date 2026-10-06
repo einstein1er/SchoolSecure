@@ -22,6 +22,8 @@ from app.ui.dashboard_prof_widget import DashboardProfWidget
 from app.ui.employes_rh_widget import EmployesRHWidget
 from app.ui.gestion_permissions_widget import GestionPermissionsWidget
 from app.ui.cours_prof_widget import CoursProfWidget
+from app.ui.cours_eleve_widget import CoursEleveWidget
+from app.ui.journal_audit_widget import JournalAuditWidget
 
 from app.repositories import permissions_repository
 
@@ -65,12 +67,18 @@ ECRANS_REELS = {
         CoursProfWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "professeur" else None
     ),
     "rh": lambda utilisateur: (
-        EmployesRHWidget(role=utilisateur["role"])
+        EmployesRHWidget(role=utilisateur["role"], utilisateur_id=utilisateur["id"])
         if utilisateur["role"] == "super_admin" or permissions_repository.autorise(utilisateur["role"], "rh_acces")
         else None
     ),
     "comptes": lambda utilisateur: (
-        GestionPermissionsWidget() if utilisateur["role"] == "super_admin" else None
+        GestionPermissionsWidget(utilisateur_id=utilisateur["id"]) if utilisateur["role"] == "super_admin" else None
+    ),
+    "mes_cours_eleve": lambda utilisateur: (
+        CoursEleveWidget(user_id=utilisateur["id"]) if utilisateur["role"] == "eleve" else None
+    ),
+    "audit": lambda utilisateur: (
+        JournalAuditWidget() if utilisateur["role"] == "super_admin" else None
     ),
 }
 

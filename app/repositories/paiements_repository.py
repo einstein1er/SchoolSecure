@@ -5,6 +5,7 @@ from app.business.soldes import calculer_solde, valider_montant_paiement
 from app.business.numero_recu import generer_numero_recu
 from app.business.hash_verification import generer_hash_verification
 from app.repositories.eleves_repository import obtenir_eleve
+from app.repositories import audit_log_repository
 
 MODES_VALIDES = {"especes", "cheque", "virement", "mobile_money"}
 
@@ -64,6 +65,11 @@ def enregistrer_paiement(eleve_id: int, montant: float, mode_paiement: str, enre
         paiement_id = curseur.lastrowid
     finally:
         connexion.close()
+
+    audit_log_repository.enregistrer(
+        enregistre_par, "CREATION", "paiements", paiement_id,
+        f"Paiement {numero_recu} de {montant:.0f} FCFA pour eleve id={eleve_id}"
+    )
 
     return {
         "id": paiement_id,

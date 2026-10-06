@@ -1,11 +1,13 @@
 from app.database.db_connection import get_connection
 from app.security.crypto_utils import chiffrer, dechiffrer
 from app.business.matricule import generer_matricule
+from app.repositories import audit_log_repository
 
 
 def ajouter_eleve(nom: str, prenom: str, classe_id: int, annee_scolaire: str, total_du: float,
                    date_naissance: str = None, sexe: str = None,
-                   nom_parent: str = None, telephone_parent: str = None) -> int:
+                   nom_parent: str = None, telephone_parent: str = None,
+                   modifie_par: int = None) -> int:
     matricule = generer_matricule()
     connexion = get_connection()
     try:
@@ -22,16 +24,23 @@ def ajouter_eleve(nom: str, prenom: str, classe_id: int, annee_scolaire: str, to
             ),
         )
         connexion.commit()
-        return curseur.lastrowid
+        eleve_id = curseur.lastrowid
     finally:
         connexion.close()
+
+    if modifie_par is not None:
+        audit_log_repository.enregistrer(
+            modifie_par, "CREATION", "eleves", eleve_id, f"Creation eleve {matricule} ({prenom} {nom})"
+        )
+    return eleve_id
 
 
 def modifier_eleve(eleve_id: int, nom: str = None, prenom: str = None,
                     classe_id: int = None, total_du: float = None,
                     date_naissance: str = None, sexe: str = None,
                     nom_parent: str = None, telephone_parent: str = None,
-                    modifier_champs_parent: bool = False) -> None:
+                    modifier_champs_parent: bool = False,
+                    modifie_par: int = None) -> None:
     """modifier_champs_parent : si False (par defaut), les champs nom_parent/
     telephone_parent ne sont PAS touches, meme si on passe None -- protege
     les donnees restreintes contre un ecrasement accidentel par un role qui
@@ -73,6 +82,12 @@ def modifier_eleve(eleve_id: int, nom: str = None, prenom: str = None,
         connexion.commit()
     finally:
         connexion.close()
+
+    if modifie_par is not None:
+        audit_log_repository.enregistrer(
+            modifie_par, "MODIFICATION", "eleves", eleve_id,
+            f"Modification eleve {eleve_actuel['matricule']} ({prenom} {nom})"
+        )
 
 
 def associer_compte_utilisateur(eleve_id: int, user_id: int) -> None:

@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QPushButton, QFrame, QMessageBox, QScrollArea
 )
 
-from app.repositories import permissions_repository
+from app.repositories import permissions_repository, audit_log_repository
 
 NOMS_ROLES = {
     "secretariat": "Secretariat",
@@ -23,8 +23,9 @@ NOMS_ROLES = {
 
 
 class GestionPermissionsWidget(QWidget):
-    def __init__(self):
+    def __init__(self, utilisateur_id: int = None):
         super().__init__()
+        self.utilisateur_id = utilisateur_id
         self.cases = {}  # {(role, cle): QCheckBox}
         self._construire_interface()
         self._charger()
@@ -110,6 +111,11 @@ class GestionPermissionsWidget(QWidget):
     def _enregistrer(self):
         for (role, cle), case in self.cases.items():
             permissions_repository.definir_permission(role, cle, case.isChecked())
+        if self.utilisateur_id is not None:
+            audit_log_repository.enregistrer(
+                self.utilisateur_id, "MODIFICATION", "permissions", None,
+                "Mise a jour de la grille des permissions par role"
+            )
         QMessageBox.information(
             self, "Permissions enregistrees",
             "Les permissions ont ete mises a jour. Elles seront appliquees "

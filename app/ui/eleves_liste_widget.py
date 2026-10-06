@@ -135,12 +135,12 @@ class ElevesListeWidget(QWidget):
         self.filtre_classe.blockSignals(False)
 
     def _ouvrir_formulaire_ajout(self):
-        dialogue = EleveFormDialog(role=self.role, eleve_id=None, parent=self)
+        dialogue = EleveFormDialog(role=self.role, eleve_id=None, utilisateur_id=self.utilisateur_id, parent=self)
         if dialogue.exec() == EleveFormDialog.Accepted:
             self._rafraichir_complet()
 
     def _ouvrir_formulaire_modification(self, eleve_id: int):
-        dialogue = EleveFormDialog(role=self.role, eleve_id=eleve_id, parent=self)
+        dialogue = EleveFormDialog(role=self.role, eleve_id=eleve_id, utilisateur_id=self.utilisateur_id, parent=self)
         if dialogue.exec() == EleveFormDialog.Accepted:
             self._rafraichir_complet()
 

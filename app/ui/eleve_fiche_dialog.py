@@ -253,6 +253,8 @@ class EleveFicheDialog(QDialog):
         modification reussie -- l'utilisateur peut la rouvrir pour voir
         les infos a jour, via le bouton 'Voir' depuis la liste."""
         from app.ui.eleve_form_dialog import EleveFormDialog
-        dialogue = EleveFormDialog(role=self.role, eleve_id=self.eleve_id, parent=self)
+        dialogue = EleveFormDialog(
+            role=self.role, eleve_id=self.eleve_id, utilisateur_id=self.utilisateur_id, parent=self
+        )
         if dialogue.exec() == EleveFormDialog.Accepted:
             self.accept()
