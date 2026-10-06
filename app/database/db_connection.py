@@ -5,9 +5,16 @@ directement : ca centralise la configuration (foreign_keys, row_factory).
 """
 
 import sqlite3
+import sys
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "school.db"
+if getattr(sys, "frozen", False):
+    # Application compilee en .exe (PyInstaller) : le fichier doit rester
+    # A COTE du .exe de maniere permanente, jamais dans le dossier
+    # temporaire d'extraction (qui est supprime a chaque fermeture).
+    DB_PATH = Path(sys.executable).parent / "school.db"
+else:
+    DB_PATH = Path(__file__).parent / "school.db"
 
 
 def get_connection() -> sqlite3.Connection:

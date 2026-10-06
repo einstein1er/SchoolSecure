@@ -6,11 +6,15 @@ RELATIF est stocke en base -- pas le contenu du fichier lui-meme.
 """
 
 import shutil
+import sys
 import uuid
 from pathlib import Path
 from datetime import datetime
 
-DOSSIER_COURS = Path(__file__).resolve().parents[2] / "fichiers_cours"
+if getattr(sys, "frozen", False):
+    DOSSIER_COURS = Path(sys.executable).parent / "fichiers_cours"
+else:
+    DOSSIER_COURS = Path(__file__).resolve().parents[2] / "fichiers_cours"
 
 
 def copier_fichier_cours(chemin_source: str) -> str:

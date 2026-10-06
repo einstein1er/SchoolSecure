@@ -11,11 +11,16 @@ Principe :
   (ex: copie sur cle USB, coffre-fort numerique de l'etablissement).
 """
 
+import sys
 from pathlib import Path
 from cryptography.fernet import Fernet
 
-# Chemin du fichier contenant la cle secrete (a cote de ce module)
-KEY_PATH = Path(__file__).parent / "secret.key"
+if getattr(sys, "frozen", False):
+    # Application compilee en .exe : la cle doit rester A COTE du .exe,
+    # jamais dans le dossier temporaire d'extraction de PyInstaller.
+    KEY_PATH = Path(sys.executable).parent / "secret.key"
+else:
+    KEY_PATH = Path(__file__).parent / "secret.key"
 
 
 def generer_cle_si_absente() -> None:
