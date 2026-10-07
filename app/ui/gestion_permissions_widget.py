@@ -9,8 +9,9 @@ s'adapte automatiquement, sans aucune autre modification necessaire.
 
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QCheckBox,
-    QPushButton, QFrame, QMessageBox, QScrollArea
+    QPushButton, QFrame, QMessageBox, QScrollArea, QSizePolicy
 )
+from PySide6.QtCore import Qt
 
 from app.repositories import permissions_repository, audit_log_repository
 
@@ -61,29 +62,47 @@ class GestionPermissionsWidget(QWidget):
         # En-tete : une colonne par permission
         label_role_entete = QLabel("Role")
         label_role_entete.setStyleSheet("font-weight: bold; color: #444;")
-        grille.addWidget(label_role_entete, 0, 0)
+        grille.addWidget(label_role_entete, 0, 0, Qt.AlignLeft | Qt.AlignVCenter)
+
+        nb_permissions = len(permissions_repository.PERMISSIONS_DISPONIBLES)
 
         for col, (cle, libelle) in enumerate(permissions_repository.PERMISSIONS_DISPONIBLES, start=1):
             label = QLabel(libelle)
             label.setStyleSheet("font-weight: bold; color: #444;")
             label.setWordWrap(True)
             label.setFixedWidth(180)
-            grille.addWidget(label, 0, col)
+            label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            grille.addWidget(label, 0, col, Qt.AlignLeft | Qt.AlignVCenter)
 
         ligne_separation = QFrame()
         ligne_separation.setFrameShape(QFrame.HLine)
-        ligne_separation.setStyleSheet("color: #cbd5e1;")
-        grille.addWidget(ligne_separation, 1, 0, 1, len(permissions_repository.PERMISSIONS_DISPONIBLES) + 1)
+        ligne_separation.setFixedHeight(2)
+        ligne_separation.setStyleSheet("background-color: #cbd5e1; border: none;")
+        grille.addWidget(ligne_separation, 1, 0, 1, nb_permissions + 1)
 
         # Une ligne par role
+        derniere_ligne = 1
         for row, role in enumerate(permissions_repository.ROLES_CONCERNES, start=2):
             label_role = QLabel(NOMS_ROLES.get(role, role))
-            grille.addWidget(label_role, row, 0)
+            grille.addWidget(label_role, row, 0, Qt.AlignLeft | Qt.AlignVCenter)
 
             for col, (cle, libelle) in enumerate(permissions_repository.PERMISSIONS_DISPONIBLES, start=1):
                 case = QCheckBox()
                 self.cases[(role, cle)] = case
-                grille.addWidget(case, row, col)
+                grille.addWidget(case, row, col, Qt.AlignLeft | Qt.AlignVCenter)
+            derniere_ligne = row
+
+        # Empeche Qt de repartir l'espace vertical/horizontal excedentaire
+        # sur les lignes/colonnes de contenu : tout l'espace en trop part
+        # dans une ligne et une colonne "puits" invisibles, en dehors du
+        # contenu utile (sinon chaque case se retrouve etiree enormement).
+        for r in range(0, derniere_ligne + 1):
+            grille.setRowStretch(r, 0)
+        grille.setRowStretch(derniere_ligne + 1, 1)
+
+        for c in range(0, nb_permissions + 1):
+            grille.setColumnStretch(c, 0)
+        grille.setColumnStretch(nb_permissions + 1, 1)
 
         zone_defilement.setWidget(cadre)
         layout.addWidget(zone_defilement)
