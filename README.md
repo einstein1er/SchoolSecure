@@ -1,6 +1,13 @@
 # SchoolSecure — Gestion Scolaire
 
 Application desktop multi-rôles pour la gestion scolaire : élèves, paiements, cours, emploi du temps. Développée en Python/PySide6, données sensibles chiffrées, reçus de paiement avec QR code vérifiable, 100% offline.
+## Livrables
+
+- 📦 **Dossier Drive** (exécutable, base de test, documents) : (https://drive.google.com/drive/folders/19cZpOB9YPf3KcZjYEIx5OvREG_Ps_-sd?usp=sharing)
+- 📄 Documentation technique : `docs/Documentation_technique_SchoolSecure.docx`
+- 📖 Manuel utilisateur : `docs/Manuel_utilisateur_SchoolSecure.docx`
+- 🛠 Guide d'installation : `docs/Guide_installation_SchoolSecure.docx`
+- 🗂 Schéma de la base : `docs/schema_diagram.png` et `app/database/schema.sql`
 
 ## Sommaire
 
